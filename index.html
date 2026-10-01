@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <title>R45 Clock</title>
+  <style>
+    :root{--bg:#050505;--fg:#f5f5f5;--muted:#8a8a8a;--line:#1a1a1a}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg)}
+    body{
+      font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      min-height:100svh;display:grid;place-items:center;padding:28px
+    }
+    main{
+      width:min(980px,100%);min-height:82svh;display:flex;flex-direction:column;
+      justify-content:space-between;border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);padding:24px 0
+    }
+    .top,.bottom{display:flex;justify-content:space-between;gap:20px;align-items:baseline}
+    .brand{font-weight:800;font-size:clamp(22px,4vw,34px);letter-spacing:-.04em}
+    .subtitle,.deadline,.label,.breakdown{
+      color:var(--muted);text-transform:uppercase;letter-spacing:.16em;font-size:12px
+    }
+    .center{padding:12vh 0}
+    .minutes{
+      font-variant-numeric:tabular-nums;font-weight:800;letter-spacing:-.065em;
+      line-height:.86;font-size:clamp(72px,17vw,210px);word-break:break-word
+    }
+    .label{margin-top:22px;font-weight:700}
+    .breakdown{
+      margin-top:30px;letter-spacing:.08em;text-transform:none;
+      font-size:clamp(14px,2vw,18px);font-variant-numeric:tabular-nums
+    }
+    .armed .minutes{font-size:clamp(72px,16vw,190px);letter-spacing:-.04em}
+    .done .minutes{font-size:clamp(64px,14vw,160px)}
+    @media(max-width:620px){
+      body{padding:20px}main{min-height:88svh}
+      .top,.bottom{align-items:flex-start;flex-direction:column}
+      .center{padding:8vh 0}
+      .minutes{font-size:clamp(64px,22vw,110px)}
+    }
+  </style>
+</head>
+<body>
+  <main id="app" class="armed">
+    <div class="top">
+      <div class="brand">R45</div>
+      <div class="subtitle">Every Second Counts</div>
+    </div>
+
+    <section class="center">
+      <div id="minutes" class="minutes">ARMED</div>
+      <div id="label" class="label">Starts at midnight</div>
+      <div id="breakdown" class="breakdown">02.10.2026 · 00:00 London</div>
+    </section>
+
+    <div class="bottom">
+      <div class="deadline">END · 02.10.2031 · 00:00 LONDON</div>
+      <div class="deadline">EUROPE/LONDON</div>
+    </div>
+  </main>
+
+  <script>
+    // Fixed instants corresponding to 00:00 Europe/London on each date.
+    // Both dates fall during British Summer Time (UTC+1).
+    const START  = Date.parse("2026-10-01T23:00:00Z"); // 02 Oct 2026 00:00 London
+    const TARGET = Date.parse("2031-10-01T23:00:00Z"); // 02 Oct 2031 00:00 London
+
+    // Exact R45 duration: 1,826 days = 2,629,440 minutes.
+    const STARTING_MINUTES = 2629440;
+
+    const app = document.getElementById("app");
+    const minutesEl = document.getElementById("minutes");
+    const labelEl = document.getElementById("label");
+    const breakdownEl = document.getElementById("breakdown");
+    const fmt = new Intl.NumberFormat("en-GB");
+
+    function pad(n){ return String(n).padStart(2,"0"); }
+
+    function updateClock(){
+      const now = Date.now();
+
+      if(now < START){
+        app.className = "armed";
+        minutesEl.textContent = "ARMED";
+        labelEl.textContent = "Starts at midnight";
+        breakdownEl.textContent = "02.10.2026 · 00:00 London";
+        return;
+      }
+
+      if(now >= TARGET){
+        app.className = "done";
+        minutesEl.textContent = "0";
+        labelEl.textContent = "Minutes remaining";
+        breakdownEl.textContent = "R45 complete · 02.10.2031 · 00:00 London";
+        return;
+      }
+
+      app.className = "";
+      const diff = TARGET - now;
+      const totalMinutes = Math.ceil(diff / 60000);
+      const totalSeconds = Math.floor(diff / 1000);
+
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const mins = Math.floor((totalSeconds % 3600) / 60);
+      const secs = totalSeconds % 60;
+
+      minutesEl.textContent = fmt.format(totalMinutes);
+      labelEl.textContent = "Minutes remaining";
+      breakdownEl.textContent =
+        `${days}d · ${pad(hours)}h · ${pad(mins)}m · ${pad(secs)}s`;
+    }
+
+    updateClock();
+    setInterval(updateClock, 250);
+  </script>
+</body>
+</html>
